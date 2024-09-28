@@ -11,7 +11,7 @@ GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 GLvoid Keyboard(unsigned char key, int x, int y);
 
-std::vector<int> rectangles;
+std::vector<struct rect> rectangles;
 
 struct rect {
 	GLfloat x1;
@@ -25,7 +25,7 @@ struct rect {
 	GLclampf a = 0;
 
 
-	void init() {
+	rect() {
 
 		GLint viewport[4];
 		glGetIntegerv(GL_VIEWPORT, viewport);
@@ -35,6 +35,10 @@ struct rect {
 		x2 = x1 + 0.1f;
 		y1 = (float)(rand() % viewport_height) / viewport_height * 2 - 1.0f;
 		y2 = y1 + 0.1f;
+
+		r = 0.0f;
+		g = 0.0f;
+		b = 0.0f;
 	}
 };
 
@@ -48,7 +52,6 @@ void main(int argc, char** argv)
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(800, 600);
 	glutCreateWindow("CG_4w_opengl_3");
-
 
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
