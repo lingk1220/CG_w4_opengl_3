@@ -13,10 +13,11 @@ GLvoid Keyboard(unsigned char key, int x, int y);
 void draw_rect(int index);
 void clamp_pos(GLfloat* input_pos);
 void Mouse(int button, int state, int x, int y);
+void Motion(int x, int y);
 
 std::vector<struct rect> rectangles;
 
-int select_index = 0;
+int select_index = -1;
 
 struct rect {
 	GLfloat x1;
@@ -68,7 +69,7 @@ void main(int argc, char** argv)
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
 	glutMouseFunc(Mouse);
-	//glutMotionFunc(Motion);
+	glutMotionFunc(Motion);
 	glutMainLoop();
 }
 
@@ -107,9 +108,11 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 void Mouse(int button, int state, int x, int y)
 {
+	std::cout << "??\n";
 	GLfloat input_pos[2] = { x, y };
 	clamp_pos(input_pos);
 	if (state == GLUT_DOWN) {
+		if (rectangles.empty()) return;
 		for (int i = rectangles.size() - 1; i >= 0; i--) {
 			if (rectangles[i].x1 <= input_pos[0] && input_pos[0] <= rectangles[i].x2) {
 				if (rectangles[i].y1 <= input_pos[1] && input_pos[1] <= rectangles[i].y2) {
@@ -121,8 +124,26 @@ void Mouse(int button, int state, int x, int y)
 		}
 		glutPostRedisplay();
 	}
+	else {
+		select_index = -1;
+	}
 
 }
+
+void Motion(int x, int y)
+{
+	if (select_index == -1) return;
+	GLfloat input_pos[2] = { x, y };
+	clamp_pos(input_pos);
+	rectangles[select_index].x1 = input_pos[0] - RECTINITSIZE / 2;
+	rectangles[select_index].x2 = input_pos[0] + RECTINITSIZE / 2;
+	rectangles[select_index].y1 = input_pos[1] - RECTINITSIZE / 2;
+	rectangles[select_index].y2 = input_pos[1] + RECTINITSIZE / 2;
+
+
+	glutPostRedisplay();
+}
+
 
 void clamp_pos(GLfloat* input_pos) {
 	GLint viewport[4];
