@@ -5,9 +5,10 @@
 #include <vector>
 #include <math.h>
 #define RECTINITSIZE 0.2
-
+#define MAXRECTCOUNT 10
 GLfloat	dx[4] = { 1.0f, -1.0f, -1.0f, 1.0f };
 GLfloat dy[4] = { 1.0f, 1.0f, -1.0f, -1.0f };
+int rectcount = 0;
 
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
@@ -112,7 +113,10 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	struct rect rect_new;
 	switch (key) {
 	case 'a':
-		rectangles.push_back(rect_new);
+		if (rectcount < 10) {
+			rectcount++;
+			rectangles.push_back(rect_new);
+		}
 		break;
 	case 'q':
 		glutLeaveMainLoop();
@@ -198,52 +202,29 @@ int rect_find_overlap() {
 	}
 
 	return -1;
-	//if (rectangles.empty()) return -1;
-	//int ret_index = -1;
-	//GLfloat vert[2];
-	//GLfloat rect_width = rectangles[select_index].x2 - rectangles[select_index].x1;
-	//GLfloat rect_height = rectangles[select_index].y2 - rectangles[select_index].y1;
-	//GLfloat vert_Mid[2] = { rectangles[select_index].x1 + rect_width/2, rectangles[select_index].y1 + rect_height/2};
 
-
-	//
-	//for (int i = 0; i < 4; i++) {
-	//	vert[0] = vert_Mid[0] + (rect_width/2 * dx[i]);
-	//	vert[1] = vert_Mid[1] + (rect_height/2 * dy[i]);
-	//	int cmp_index = rect_find_top(vert);
-	//	//if (cmp_index == select_index) continue;
-	//	ret_index = ret_index < cmp_index ? cmp_index : ret_index;
-	//}
-
-	//return ret_index;
 }
 
 void rect_merge() {
 
-	//std::cout << rectangles.size() << std::endl;
 	if (select_index == -1) return;
 	int merge_index = -1;
 
 	merge_index = rect_find_overlap();
 
-	std::cout << merge_index << " ";
-	std::cout << select_index << std::endl;
 
 	if (merge_index != -1) {
 		GLfloat ix1 = rectangles[select_index].x1 < rectangles[merge_index].x1 ? rectangles[select_index].x1 : rectangles[merge_index].x1;
 		GLfloat iy1 = rectangles[select_index].y1 < rectangles[merge_index].y1 ? rectangles[select_index].y1 : rectangles[merge_index].y1;
 		GLfloat ix2 = rectangles[select_index].x2 > rectangles[merge_index].x2 ? rectangles[select_index].x2 : rectangles[merge_index].x2;
 		GLfloat iy2 = rectangles[select_index].y2 > rectangles[merge_index].y2 ? rectangles[select_index].y2 : rectangles[merge_index].y2;
-
-		//std::cout << rectangles[select_index].x1 << std::endl;
-
-		
+	
 		struct rect rect_new(ix1, iy1, ix2, iy2);
 		rectangles.push_back(rect_new);
 		
 		rectangles.erase(rectangles.begin() + merge_index);
 		if(merge_index < select_index) rectangles.erase(rectangles.begin() + select_index - 1);
 		else rectangles.erase(rectangles.begin() + select_index);
-		
+		rectcount--;
 	}
 }
