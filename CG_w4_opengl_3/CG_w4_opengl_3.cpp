@@ -4,12 +4,13 @@
 #include <gl/freeglut_ext.h>
 #include <vector>
 #include <math.h>
-
+#define RECTINITSIZE 0.2
 
 
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 GLvoid Keyboard(unsigned char key, int x, int y);
+void draw_rect(int index);
 
 std::vector<struct rect> rectangles;
 
@@ -32,15 +33,15 @@ struct rect {
 		int viewport_width = viewport[2];
 		int viewport_height = viewport[3];
 		x1 = (float)(rand() % viewport_width) / viewport_width * 2 - 1.0f;
-		x2 = x1 + 0.1f;
+		x2 = x1 + RECTINITSIZE;
 		y1 = (float)(rand() % viewport_height) / viewport_height * 2 - 1.0f;
-		y2 = y1 + 0.1f;
+		y2 = y1 + RECTINITSIZE;
 
-		r = 0.0f;
-		g = 0.0f;
-		b = 0.0f;
+		r = (float)(rand() % viewport_width) / viewport_width;
+		g = (float)(rand() % viewport_width) / viewport_width;
+		b = (float)(rand() % viewport_width) / viewport_width;
 	}
-};
+}rect;
 
 void main(int argc, char** argv)
 {
@@ -68,8 +69,12 @@ void main(int argc, char** argv)
 
 GLvoid drawScene()
 {
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
+	if (!rectangles.empty()) {
+		for (int i = 0; i < rectangles.size(); i++) {
+			draw_rect(i);
+		}
+	}
 	glutSwapBuffers();
 }
 
@@ -81,9 +86,10 @@ GLvoid Reshape(int w, int h)
 
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
+	struct rect rect_new;
 	switch (key) {
 	case 'a':
-
+		rectangles.push_back(rect_new);
 		break;
 	case 'q':
 		glutLeaveMainLoop();
@@ -91,4 +97,9 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 	}
 	glutPostRedisplay();
+}
+
+void draw_rect(int index) {
+	glColor3f(rectangles[index].r, rectangles[index].g, rectangles[index].b);
+	glRectf(rectangles[index].x1, rectangles[index].y1, rectangles[index].x2, rectangles[index].y2);
 }
