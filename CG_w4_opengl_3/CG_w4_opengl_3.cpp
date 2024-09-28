@@ -6,6 +6,8 @@
 #include <math.h>
 #define RECTINITSIZE 0.2
 
+GLfloat	dx[4] = { 1.0f, -1.0f, -1.0f, 1.0f };
+GLfloat dy[4] = { 1.0f, 1.0f, -1.0f, -1.0f };
 
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
@@ -14,6 +16,8 @@ void draw_rect(int index);
 void clamp_pos(GLfloat* input_pos);
 void Mouse(int button, int state, int x, int y);
 void Motion(int x, int y);
+int rect_find_top(GLfloat* input_pos);
+int rect_find_overlap();
 
 std::vector<struct rect> rectangles;
 
@@ -108,23 +112,17 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 void Mouse(int button, int state, int x, int y)
 {
-	std::cout << "??\n";
+	int merge_index = -1;
 	GLfloat input_pos[2] = { x, y };
 	clamp_pos(input_pos);
 	if (state == GLUT_DOWN) {
-		if (rectangles.empty()) return;
-		for (int i = rectangles.size() - 1; i >= 0; i--) {
-			if (rectangles[i].x1 <= input_pos[0] && input_pos[0] <= rectangles[i].x2) {
-				if (rectangles[i].y1 <= input_pos[1] && input_pos[1] <= rectangles[i].y2) {
-					select_index = i;
-					std::cout << select_index << std::endl;
-					break;
-				}
-			}
-		}
+		rect_find_top(input_pos);
+		select_index = rect_find_top(input_pos);
 		glutPostRedisplay();
 	}
 	else {
+		merge_index = rect_find_overlap();
+		std::cout << merge_index << std::endl;
 		select_index = -1;
 	}
 
@@ -140,7 +138,7 @@ void Motion(int x, int y)
 	rectangles[select_index].y1 = input_pos[1] - RECTINITSIZE / 2;
 	rectangles[select_index].y2 = input_pos[1] + RECTINITSIZE / 2;
 
-
+	
 	glutPostRedisplay();
 }
 
@@ -157,4 +155,38 @@ void clamp_pos(GLfloat* input_pos) {
 void draw_rect(int index) {
 	glColor3f(rectangles[index].r, rectangles[index].g, rectangles[index].b);
 	glRectf(rectangles[index].x1, rectangles[index].y1, rectangles[index].x2, rectangles[index].y2);
+}
+
+int rect_find_top(GLfloat* input_pos) {
+	if (rectangles.empty()) return -1;
+	for (int i = rectangles.size() - 1; i >= 0; i--) {
+		if (rectangles[i].x1 <= input_pos[0] && input_pos[0] <= rectangles[i].x2) {
+			if (rectangles[i].y1 <= input_pos[1] && input_pos[1] <= rectangles[i].y2) {
+				return i;
+				std::cout << select_index << std::endl;
+				break;
+			}
+		}
+	}
+}
+
+int rect_find_overlap() {
+	if (rectangles.empty()) return -1;
+	int ret_index = -1;
+	GLfloat vert[2];
+	GLfloat rect_width = rectangles[select_index].x2 - rectangles[select_index].x1;
+	GLfloat rect_height = rectangles[select_index].y2 - rectangles[select_index].y1;
+	GLfloat vert_Mid[2] = { rectangles[select_index].x1 + rect_width/2, rectangles[select_index].y1 + rect_height/2};
+
+
+	
+	for (int i = 0; i < 4; i++) {
+		vert[0] = vert_Mid[0] + (rect_width/2 * dx[i]);
+		vert[1] = vert_Mid[1] + (rect_height/2 * dy[i]);
+		int cmp_index = rect_find_top(vert);
+		if (cmp_index == select_index) continue;
+		ret_index = ret_index < cmp_index ? cmp_index : ret_index;
+	}
+
+	return ret_index;
 }
