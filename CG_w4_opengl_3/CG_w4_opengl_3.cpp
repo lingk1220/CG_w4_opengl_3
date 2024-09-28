@@ -18,6 +18,7 @@ void Mouse(int button, int state, int x, int y);
 void Motion(int x, int y);
 int rect_find_top(GLfloat* input_pos);
 int rect_find_overlap();
+void rect_merge();
 
 std::vector<struct rect> rectangles;
 
@@ -46,9 +47,20 @@ struct rect {
 		y1 = (float)(rand() % viewport_height) / viewport_height * 2 - 1.0f;
 		y2 = y1 + RECTINITSIZE;
 
-		r = (float)(rand() % viewport_width) / viewport_width;
-		g = (float)(rand() % viewport_width) / viewport_width;
-		b = (float)(rand() % viewport_width) / viewport_width;
+		r = (float)(rand() % 256) / 256;
+		g = (float)(rand() % 256) / 256;
+		b = (float)(rand() % 256) / 256;
+	}
+
+	rect(GLfloat ix1, GLfloat iy1, GLfloat ix2, GLfloat iy2) {
+		x1 = ix1;
+		x2 = ix2;
+		y1 = iy1;
+		y2 = iy2;
+
+		r = (float)(rand() % 256) / 256;
+		g = (float)(rand() % 256) / 256;
+		b = (float)(rand() % 256) / 256;
 	}
 }rect;
 
@@ -112,17 +124,14 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 void Mouse(int button, int state, int x, int y)
 {
-	int merge_index = -1;
 	GLfloat input_pos[2] = { x, y };
 	clamp_pos(input_pos);
 	if (state == GLUT_DOWN) {
-		rect_find_top(input_pos);
 		select_index = rect_find_top(input_pos);
 		glutPostRedisplay();
 	}
 	else {
-		merge_index = rect_find_overlap();
-		std::cout << merge_index << std::endl;
+		rect_merge();
 		select_index = -1;
 	}
 
@@ -131,12 +140,14 @@ void Mouse(int button, int state, int x, int y)
 void Motion(int x, int y)
 {
 	if (select_index == -1) return;
+	GLfloat rect_width = rectangles[select_index].x2 - rectangles[select_index].x1;
+	GLfloat rect_height = rectangles[select_index].y2 - rectangles[select_index].y1;
 	GLfloat input_pos[2] = { x, y };
 	clamp_pos(input_pos);
-	rectangles[select_index].x1 = input_pos[0] - RECTINITSIZE / 2;
-	rectangles[select_index].x2 = input_pos[0] + RECTINITSIZE / 2;
-	rectangles[select_index].y1 = input_pos[1] - RECTINITSIZE / 2;
-	rectangles[select_index].y2 = input_pos[1] + RECTINITSIZE / 2;
+	rectangles[select_index].x1 = input_pos[0] - rect_width / 2;
+	rectangles[select_index].x2 = input_pos[0] + rect_width / 2;
+	rectangles[select_index].y1 = input_pos[1] - rect_height / 2;
+	rectangles[select_index].y2 = input_pos[1] + rect_height / 2;
 
 	
 	glutPostRedisplay();
@@ -162,9 +173,9 @@ int rect_find_top(GLfloat* input_pos) {
 	for (int i = rectangles.size() - 1; i >= 0; i--) {
 		if (rectangles[i].x1 <= input_pos[0] && input_pos[0] <= rectangles[i].x2) {
 			if (rectangles[i].y1 <= input_pos[1] && input_pos[1] <= rectangles[i].y2) {
-				return i;
+				if(select_index != i) return i;
 				std::cout << select_index << std::endl;
-				break;
+				
 			}
 		}
 	}
@@ -184,9 +195,40 @@ int rect_find_overlap() {
 		vert[0] = vert_Mid[0] + (rect_width/2 * dx[i]);
 		vert[1] = vert_Mid[1] + (rect_height/2 * dy[i]);
 		int cmp_index = rect_find_top(vert);
-		if (cmp_index == select_index) continue;
+		//if (cmp_index == select_index) continue;
 		ret_index = ret_index < cmp_index ? cmp_index : ret_index;
 	}
 
 	return ret_index;
+}
+
+void rect_merge() {
+	if (select_index == -1) return;
+	int merge_index = -1;
+
+	merge_index = rect_find_overlap();
+
+	std::cout << merge_index << " ";
+	std::cout << select_index << std::endl;
+
+	if (merge_index != -1) {
+		GLfloat ix1 = rectangles[select_index].x1 < rectangles[merge_index].x1 ? rectangles[select_index].x1 : rectangles[merge_index].x1;
+		GLfloat iy1 = rectangles[select_index].y1 < rectangles[merge_index].y1 ? rectangles[select_index].y1 : rectangles[merge_index].y1;
+		GLfloat ix2 = rectangles[select_index].x2 > rectangles[merge_index].x2 ? rectangles[select_index].x2 : rectangles[merge_index].x2;
+		GLfloat iy2 = rectangles[select_index].y2 > rectangles[merge_index].y2 ? rectangles[select_index].y2 : rectangles[merge_index].y2;
+
+		//std::cout << rectangles[select_index].x1 << std::endl;
+
+		
+		struct rect rect_new(ix1, iy1, ix2, iy2);
+
+		if (merge_index == rectangles.size() - 1) rectangles.pop_back();
+		else rectangles.erase(rectangles.begin() + merge_index);
+
+		if (select_index == rectangles.size() - 1) rectangles.pop_back();
+		else rectangles.erase(rectangles.begin() + select_index);
+
+		rectangles.push_back(rect_new);
+
+	}
 }
