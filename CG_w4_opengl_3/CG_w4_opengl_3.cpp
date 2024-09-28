@@ -174,7 +174,6 @@ int rect_find_top(GLfloat* input_pos) {
 		if (rectangles[i].x1 <= input_pos[0] && input_pos[0] <= rectangles[i].x2) {
 			if (rectangles[i].y1 <= input_pos[1] && input_pos[1] <= rectangles[i].y2) {
 				if(select_index != i) return i;
-				std::cout << select_index << std::endl;
 				
 			}
 		}
@@ -182,27 +181,46 @@ int rect_find_top(GLfloat* input_pos) {
 }
 
 int rect_find_overlap() {
+
 	if (rectangles.empty()) return -1;
-	int ret_index = -1;
-	GLfloat vert[2];
-	GLfloat rect_width = rectangles[select_index].x2 - rectangles[select_index].x1;
-	GLfloat rect_height = rectangles[select_index].y2 - rectangles[select_index].y1;
-	GLfloat vert_Mid[2] = { rectangles[select_index].x1 + rect_width/2, rectangles[select_index].y1 + rect_height/2};
+	for (int i = rectangles.size() - 1; i >= 0; i--) {
+		if (i == select_index) continue;
+		if ((rectangles[i].x1 <= rectangles[select_index].x1 && rectangles[select_index].x1 <= rectangles[i].x2)||
+			(rectangles[i].x1 >= rectangles[select_index].x1 && rectangles[select_index].x2 >= rectangles[i].x1)) {
 
+			if ((rectangles[i].y1 <= rectangles[select_index].y1 && rectangles[select_index].y1 <= rectangles[i].y2) ||
+				(rectangles[i].y1 >= rectangles[select_index].y1 && rectangles[select_index].y2 >= rectangles[i].y1)) {
 
-	
-	for (int i = 0; i < 4; i++) {
-		vert[0] = vert_Mid[0] + (rect_width/2 * dx[i]);
-		vert[1] = vert_Mid[1] + (rect_height/2 * dy[i]);
-		int cmp_index = rect_find_top(vert);
-		//if (cmp_index == select_index) continue;
-		ret_index = ret_index < cmp_index ? cmp_index : ret_index;
+				
+				return i;
+			}
+		}
 	}
 
-	return ret_index;
+	return -1;
+	//if (rectangles.empty()) return -1;
+	//int ret_index = -1;
+	//GLfloat vert[2];
+	//GLfloat rect_width = rectangles[select_index].x2 - rectangles[select_index].x1;
+	//GLfloat rect_height = rectangles[select_index].y2 - rectangles[select_index].y1;
+	//GLfloat vert_Mid[2] = { rectangles[select_index].x1 + rect_width/2, rectangles[select_index].y1 + rect_height/2};
+
+
+	//
+	//for (int i = 0; i < 4; i++) {
+	//	vert[0] = vert_Mid[0] + (rect_width/2 * dx[i]);
+	//	vert[1] = vert_Mid[1] + (rect_height/2 * dy[i]);
+	//	int cmp_index = rect_find_top(vert);
+	//	//if (cmp_index == select_index) continue;
+	//	ret_index = ret_index < cmp_index ? cmp_index : ret_index;
+	//}
+
+	//return ret_index;
 }
 
 void rect_merge() {
+
+	//std::cout << rectangles.size() << std::endl;
 	if (select_index == -1) return;
 	int merge_index = -1;
 
@@ -221,14 +239,11 @@ void rect_merge() {
 
 		
 		struct rect rect_new(ix1, iy1, ix2, iy2);
-
-		if (merge_index == rectangles.size() - 1) rectangles.pop_back();
-		else rectangles.erase(rectangles.begin() + merge_index);
-
-		if (select_index == rectangles.size() - 1) rectangles.pop_back();
-		else rectangles.erase(rectangles.begin() + select_index);
-
 		rectangles.push_back(rect_new);
-
+		
+		rectangles.erase(rectangles.begin() + merge_index);
+		if(merge_index < select_index) rectangles.erase(rectangles.begin() + select_index - 1);
+		else rectangles.erase(rectangles.begin() + select_index);
+		
 	}
 }
